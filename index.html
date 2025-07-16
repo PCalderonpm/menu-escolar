@@ -7,10 +7,10 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React Libraries -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide-react/0.263.1/lucide-react.min.js"></script>
     <style>
         @keyframes scale-up {
             from { transform: scale(0.95); opacity: 0; }
@@ -30,7 +30,10 @@
     <script>
         // Destructure React and icons
         const { useState, useEffect, useMemo, createElement: h } = React;
-        const { ChevronLeft, ChevronRight, Settings, Utensils, Salad, X, Home, School } = window.lucide;
+        
+        // Wait for lucide to load
+        const icons = window.lucide || window.LucideReact;
+        const { ChevronLeft, ChevronRight, Settings, Utensils, Salad, X, Home, School } = icons;
 
         // Helper Functions
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -393,8 +396,22 @@
             ]);
         }
 
-        // Render the app
-        ReactDOM.render(React.createElement(App), document.getElementById('root'));
+        // Render the app when everything is loaded
+        function initApp() {
+            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && (window.lucide || window.LucideReact)) {
+                ReactDOM.render(React.createElement(App), document.getElementById('root'));
+            } else {
+                // Retry in 100ms if libraries aren't loaded yet
+                setTimeout(initApp, 100);
+            }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
