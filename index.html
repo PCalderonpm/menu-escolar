@@ -9,12 +9,9 @@
     <!-- React Libraries -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel to transpile JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
     <style>
-        /* Adding some keyframe animations for modals */
         @keyframes scale-up {
             from { transform: scale(0.95); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
@@ -30,17 +27,17 @@
 <body class="bg-gray-50">
     <div id="root"></div>
 
-    <script type="text/babel">
-        // Make sure to use window.lucide for icons
+    <script>
+        // Destructure React and icons
+        const { useState, useEffect, useMemo, createElement: h } = React;
         const { ChevronLeft, ChevronRight, Settings, Utensils, Salad, X, Home, School } = window.lucide;
-        const { useState, useEffect, useMemo } = React;
 
-        // --- Helper Functions ---
+        // Helper Functions
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
         const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
         const formatDate = (date) => date.toISOString().split('T')[0];
 
-        // --- Mock Data (Simulating loaded CSVs) ---
+        // Mock Data
         const initialSchoolMenu = {
             "2025-07-16": "Milanesas de pollo con puré de papas",
             "2025-07-17": "Fideos con salsa bolognesa",
@@ -61,10 +58,9 @@
 
         const getRandomDinner = () => dinnerSuggestions[Math.floor(Math.random() * dinnerSuggestions.length)];
 
-        // --- Main App Component ---
+        // Main App Component
         function App() {
-            // --- State Management ---
-            const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 16)); // Start in July 2025 for demo
+            const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 16));
             const [monthData, setMonthData] = useState({});
             const [selectedDay, setSelectedDay] = useState(null);
             const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,7 +70,6 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
-            // --- Effects ---
             useEffect(() => {
                 const daysInMonth = getDaysInMonth(year, month);
                 const today = new Date();
@@ -86,14 +81,11 @@
                         const date = new Date(year, month, i);
                         const dateStr = formatDate(date);
                         if (!newData[dateStr]) {
-                             // Logic to determine status
                             let status = 'pendiente';
                             const dayOfWeek = date.getDay();
-                            // Mark past weekends as 'sin-clases' if they are still 'pendiente'
                             if (date < today && (dayOfWeek === 0 || dayOfWeek === 6)) {
                                 status = 'sin-clases';
                             }
-                            // Mark future days
                             if (date > today && dateStr !== todayStr) {
                                 status = 'futuro';
                             }
@@ -109,11 +101,10 @@
                 });
             }, [year, month]);
 
-            // --- Memoized Calculations for Performance ---
             const calendarGrid = useMemo(() => {
                 const daysInMonth = getDaysInMonth(year, month);
                 let firstDay = getFirstDayOfMonth(year, month);
-                firstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Monday start
+                firstDay = firstDay === 0 ? 6 : firstDay - 1;
 
                 const grid = [];
                 for (let i = 0; i < firstDay; i++) {
@@ -142,8 +133,6 @@
                 return (summary.menuDays * prices.menu) + (summary.viandaDays * prices.vianda);
             }, [summary, prices]);
 
-
-            // --- Event Handlers ---
             const handleDayClick = (dateStr) => {
                 if (monthData[dateStr]?.status === 'futuro') return;
                 setSelectedDay(dateStr);
@@ -171,12 +160,12 @@
             const handlePriceChange = (e) => {
                 const { name, value } = e.target;
                 setPrices(prev => ({...prev, [name]: Number(value) }));
-            }
+            };
 
-            // --- UI Rendering ---
+            // Day Cell Component
             const DayCell = ({ dayInfo }) => {
                 if (dayInfo.type === 'empty') {
-                    return <div className="border rounded-lg bg-gray-100"></div>;
+                    return h('div', { className: 'border rounded-lg bg-gray-100' });
                 }
 
                 const { day, date } = dayInfo;
@@ -197,174 +186,215 @@
                     vianda: 'Vianda',
                     'sin-clases': 'Sin Clases',
                     falta: 'Faltó',
-                }
+                };
 
-                return (
-                    <div
-                        onClick={() => handleDayClick(date)}
-                        className={`relative p-2 border rounded-lg transition-all duration-200 h-28 flex flex-col ${data.status !== 'futuro' ? 'cursor-pointer' : ''} ${statusStyles[data.status] || ''} ${isWeekend && (data.status === 'pendiente' || data.status === 'futuro') ? 'bg-gray-100' : ''}`}
-                    >
-                        <span className="font-bold text-gray-700">{day}</span>
-                        <div className="mt-1 text-xs grow overflow-hidden">
-                            {data.status !== 'pendiente' && data.status !== 'futuro' && (
-                                <p className="font-semibold">{statusText[data.status]}</p>
-                            )}
-                        </div>
-                        {(data.status === 'menu' || data.status === 'vianda') && (
-                            <div className="absolute bottom-1 right-1 flex items-center gap-1 text-xs">
-                                {data.status === 'menu' && <Utensils size={12} className="text-green-600"/>}
-                                {data.status === 'vianda' && <Salad size={12} className="text-blue-600"/>}
-                            </div>
-                        )}
-                    </div>
-                );
+                const className = `relative p-2 border rounded-lg transition-all duration-200 h-28 flex flex-col ${
+                    data.status !== 'futuro' ? 'cursor-pointer' : ''
+                } ${statusStyles[data.status] || ''} ${
+                    isWeekend && (data.status === 'pendiente' || data.status === 'futuro') ? 'bg-gray-100' : ''
+                }`;
+
+                return h('div', {
+                    onClick: () => handleDayClick(date),
+                    className: className
+                }, [
+                    h('span', { className: 'font-bold text-gray-700', key: 'day' }, day),
+                    h('div', { className: 'mt-1 text-xs grow overflow-hidden', key: 'content' }, [
+                        (data.status !== 'pendiente' && data.status !== 'futuro') && 
+                        h('p', { className: 'font-semibold', key: 'status' }, statusText[data.status])
+                    ]),
+                    (data.status === 'menu' || data.status === 'vianda') && 
+                    h('div', { className: 'absolute bottom-1 right-1 flex items-center gap-1 text-xs', key: 'icon' }, [
+                        data.status === 'menu' && h(Utensils, { size: 12, className: 'text-green-600', key: 'utensils' }),
+                        data.status === 'vianda' && h(Salad, { size: 12, className: 'text-blue-600', key: 'salad' })
+                    ])
+                ]);
             };
 
-            return (
-                <div className="font-sans p-4 md:p-8 text-gray-800">
-                    <div className="max-w-7xl mx-auto">
-                        {/* --- Header --- */}
-                        <header className="flex flex-col md:flex-row justify-between items-center mb-6">
-                            <h1 className="text-3xl font-bold text-gray-700 mb-4 md:mb-0">Gestor de Menú Escolar</h1>
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center bg-white rounded-lg shadow-sm p-2">
-                                    <button onClick={() => changeMonth(-1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronLeft/></button>
-                                    <h2 className="text-xl font-semibold w-48 text-center capitalize">
-                                        {currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
-                                    </h2>
-                                    <button onClick={() => changeMonth(1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronRight/></button>
-                                </div>
-                                <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100">
-                                    <Settings className="text-gray-600"/>
-                                </button>
-                            </div>
-                        </header>
-
-                        {/* --- Main Content --- */}
-                        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* --- Calendar --- */}
-                            <div className="lg:col-span-2 bg-white p-4 rounded-xl shadow-md">
-                                <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-gray-500 mb-2">
-                                    <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-                                </div>
-                                <div className="grid grid-cols-7 gap-2">
-                                    {calendarGrid.map(dayInfo => <DayCell key={dayInfo.key} dayInfo={dayInfo} />)}
-                                </div>
-                            </div>
-
-                            {/* --- Summary & Info --- */}
-                            <div className="space-y-6">
-                                <div className="bg-white p-6 rounded-xl shadow-md">
-                                    <h3 className="text-lg font-bold mb-4 border-b pb-2">Resumen del Mes</h3>
-                                    <div className="space-y-3 text-sm">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-600">Días de Comedor:</span>
-                                            <span className="font-bold text-green-600">{summary.menuDays}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-600">Días de Vianda:</span>
-                                            <span className="font-bold text-blue-600">{summary.viandaDays}</span>
-                                        </div>
-                                        <hr className="my-2"/>
-                                        <div className="flex justify-between items-center text-lg">
-                                            <span className="font-semibold text-gray-700">Costo Total:</span>
-                                            <span className="font-bold text-indigo-600">
-                                                {totalCost.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedDay && monthData[selectedDay] && (
-                                    <div className="bg-white p-6 rounded-xl shadow-md animate-fade-in">
-                                        <h3 className="text-lg font-bold mb-4 border-b pb-2">
-                                            Detalle del {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}
-                                        </h3>
-                                        <div className="space-y-3 text-sm">
-                                            <div className="flex items-start gap-3">
-                                                <School size={18} className="text-gray-500 mt-1"/>
-                                                <div>
-                                                    <p className="font-semibold">Almuerzo Escolar:</p>
-                                                    <p className="text-gray-600">{monthData[selectedDay].schoolMenu}</p>
-                                                </div>
-                                            </div>
-                                            {monthData[selectedDay].dinnerSuggestion && (
-                                                <div className="flex items-start gap-3 pt-2 border-t mt-2">
-                                                    <Home size={18} className="text-gray-500 mt-1"/>
-                                                    <div>
-                                                        <p className="font-semibold">Sugerencia para la Cena:</p>
-                                                        <p className="text-gray-600">{monthData[selectedDay].dinnerSuggestion}</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </main>
-                    </div>
-
-                    {/* --- Modals --- */}
-                    {isModalOpen && selectedDay && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-bold">
-                                        Registrar Día: {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
-                                    </h3>
-                                    <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-2">Menú del colegio: <span className="font-semibold">{monthData[selectedDay]?.schoolMenu}</span></p>
-                                <p className="text-sm text-gray-600 mb-6">¿Qué opción corresponde para este día?</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => handleStatusChange('menu')} className="p-4 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">Comedor</button>
-                                    <button onClick={() => handleStatusChange('vianda')} className="p-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors">Vianda</button>
-                                    <button onClick={() => handleStatusChange('sin-clases')} className="p-4 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">Sin Clases</button>
-                                    <button onClick={() => handleStatusChange('falta')} className="p-4 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors">Faltó</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+            return h('div', { className: 'font-sans p-4 md:p-8 text-gray-800' }, [
+                h('div', { className: 'max-w-7xl mx-auto' }, [
+                    // Header
+                    h('header', { className: 'flex flex-col md:flex-row justify-between items-center mb-6' }, [
+                        h('h1', { className: 'text-3xl font-bold text-gray-700 mb-4 md:mb-0' }, 'Gestor de Menú Escolar'),
+                        h('div', { className: 'flex items-center gap-4' }, [
+                            h('div', { className: 'flex items-center bg-white rounded-lg shadow-sm p-2' }, [
+                                h('button', { 
+                                    onClick: () => changeMonth(-1), 
+                                    className: 'p-2 rounded-md hover:bg-gray-100' 
+                                }, h(ChevronLeft)),
+                                h('h2', { className: 'text-xl font-semibold w-48 text-center capitalize' }, 
+                                    currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })),
+                                h('button', { 
+                                    onClick: () => changeMonth(1), 
+                                    className: 'p-2 rounded-md hover:bg-gray-100' 
+                                }, h(ChevronRight))
+                            ]),
+                            h('button', { 
+                                onClick: () => setIsSettingsOpen(true), 
+                                className: 'p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100' 
+                            }, h(Settings, { className: 'text-gray-600' }))
+                        ])
+                    ]),
                     
-                    {isSettingsOpen && (
-                         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-bold">Configuración de Precios</h3>
-                                    <button onClick={() => setIsSettingsOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
-                                </div>
-                                <p className="text-sm text-gray-600 mb-6">Ajusta los valores para el mes actual.</p>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label htmlFor="menu" className="block text-sm font-medium text-gray-700">Precio Menú Diario</label>
-                                        <div className="mt-1 relative rounded-md shadow-sm">
-                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span className="text-gray-500 sm:text-sm">$</span>
-                                            </div>
-                                            <input type="number" name="menu" id="menu" value={prices.menu} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
-                                        </div>
-                                    </div>
-                                     <div>
-                                        <label htmlFor="vianda" className="block text-sm font-medium text-gray-700">Precio Servicio Vianda</label>
-                                        <div className="mt-1 relative rounded-md shadow-sm">
-                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <span className="text-gray-500 sm:text-sm">$</span>
-                                            </div>
-                                            <input type="number" name="vianda" id="vianda" value={prices.vianda} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                 <button onClick={() => setIsSettingsOpen(false)} className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-                                    Guardar
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
+                    // Main Content
+                    h('main', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-8' }, [
+                        // Calendar
+                        h('div', { className: 'lg:col-span-2 bg-white p-4 rounded-xl shadow-md' }, [
+                            h('div', { className: 'grid grid-cols-7 gap-1 text-center font-semibold text-sm text-gray-500 mb-2' }, [
+                                h('div', {}, 'Lun'),
+                                h('div', {}, 'Mar'),
+                                h('div', {}, 'Mié'),
+                                h('div', {}, 'Jue'),
+                                h('div', {}, 'Vie'),
+                                h('div', {}, 'Sáb'),
+                                h('div', {}, 'Dom')
+                            ]),
+                            h('div', { className: 'grid grid-cols-7 gap-2' }, 
+                                calendarGrid.map(dayInfo => h(DayCell, { key: dayInfo.key, dayInfo })))
+                        ]),
+                        
+                        // Summary & Info
+                        h('div', { className: 'space-y-6' }, [
+                            h('div', { className: 'bg-white p-6 rounded-xl shadow-md' }, [
+                                h('h3', { className: 'text-lg font-bold mb-4 border-b pb-2' }, 'Resumen del Mes'),
+                                h('div', { className: 'space-y-3 text-sm' }, [
+                                    h('div', { className: 'flex justify-between items-center' }, [
+                                        h('span', { className: 'text-gray-600' }, 'Días de Comedor:'),
+                                        h('span', { className: 'font-bold text-green-600' }, summary.menuDays)
+                                    ]),
+                                    h('div', { className: 'flex justify-between items-center' }, [
+                                        h('span', { className: 'text-gray-600' }, 'Días de Vianda:'),
+                                        h('span', { className: 'font-bold text-blue-600' }, summary.viandaDays)
+                                    ]),
+                                    h('hr', { className: 'my-2' }),
+                                    h('div', { className: 'flex justify-between items-center text-lg' }, [
+                                        h('span', { className: 'font-semibold text-gray-700' }, 'Costo Total:'),
+                                        h('span', { className: 'font-bold text-indigo-600' }, 
+                                            totalCost.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }))
+                                    ])
+                                ])
+                            ]),
+                            
+                            // Day Details
+                            selectedDay && monthData[selectedDay] && h('div', { className: 'bg-white p-6 rounded-xl shadow-md animate-fade-in' }, [
+                                h('h3', { className: 'text-lg font-bold mb-4 border-b pb-2' }, 
+                                    `Detalle del ${new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}`),
+                                h('div', { className: 'space-y-3 text-sm' }, [
+                                    h('div', { className: 'flex items-start gap-3' }, [
+                                        h(School, { size: 18, className: 'text-gray-500 mt-1' }),
+                                        h('div', {}, [
+                                            h('p', { className: 'font-semibold' }, 'Almuerzo Escolar:'),
+                                            h('p', { className: 'text-gray-600' }, monthData[selectedDay].schoolMenu)
+                                        ])
+                                    ]),
+                                    monthData[selectedDay].dinnerSuggestion && h('div', { className: 'flex items-start gap-3 pt-2 border-t mt-2' }, [
+                                        h(Home, { size: 18, className: 'text-gray-500 mt-1' }),
+                                        h('div', {}, [
+                                            h('p', { className: 'font-semibold' }, 'Sugerencia para la Cena:'),
+                                            h('p', { className: 'text-gray-600' }, monthData[selectedDay].dinnerSuggestion)
+                                        ])
+                                    ])
+                                ])
+                            ])
+                        ])
+                    ])
+                ]),
+                
+                // Day Modal
+                isModalOpen && selectedDay && h('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4' }, [
+                    h('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up' }, [
+                        h('div', { className: 'flex justify-between items-center mb-4' }, [
+                            h('h3', { className: 'text-xl font-bold' }, 
+                                `Registrar Día: ${new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}`),
+                            h('button', { 
+                                onClick: () => setIsModalOpen(false), 
+                                className: 'p-1 rounded-full hover:bg-gray-200' 
+                            }, h(X, { size: 20 }))
+                        ]),
+                        h('p', { className: 'text-sm text-gray-600 mb-2' }, [
+                            'Menú del colegio: ',
+                            h('span', { className: 'font-semibold' }, monthData[selectedDay]?.schoolMenu)
+                        ]),
+                        h('p', { className: 'text-sm text-gray-600 mb-6' }, '¿Qué opción corresponde para este día?'),
+                        h('div', { className: 'grid grid-cols-2 gap-4' }, [
+                            h('button', { 
+                                onClick: () => handleStatusChange('menu'), 
+                                className: 'p-4 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors' 
+                            }, 'Comedor'),
+                            h('button', { 
+                                onClick: () => handleStatusChange('vianda'), 
+                                className: 'p-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors' 
+                            }, 'Vianda'),
+                            h('button', { 
+                                onClick: () => handleStatusChange('sin-clases'), 
+                                className: 'p-4 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors' 
+                            }, 'Sin Clases'),
+                            h('button', { 
+                                onClick: () => handleStatusChange('falta'), 
+                                className: 'p-4 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors' 
+                            }, 'Faltó')
+                        ])
+                    ])
+                ]),
+                
+                // Settings Modal
+                isSettingsOpen && h('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4' }, [
+                    h('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up' }, [
+                        h('div', { className: 'flex justify-between items-center mb-4' }, [
+                            h('h3', { className: 'text-xl font-bold' }, 'Configuración de Precios'),
+                            h('button', { 
+                                onClick: () => setIsSettingsOpen(false), 
+                                className: 'p-1 rounded-full hover:bg-gray-200' 
+                            }, h(X, { size: 20 }))
+                        ]),
+                        h('p', { className: 'text-sm text-gray-600 mb-6' }, 'Ajusta los valores para el mes actual.'),
+                        h('div', { className: 'space-y-4' }, [
+                            h('div', {}, [
+                                h('label', { htmlFor: 'menu', className: 'block text-sm font-medium text-gray-700' }, 'Precio Menú Diario'),
+                                h('div', { className: 'mt-1 relative rounded-md shadow-sm' }, [
+                                    h('div', { className: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3' }, [
+                                        h('span', { className: 'text-gray-500 sm:text-sm' }, '$')
+                                    ]),
+                                    h('input', { 
+                                        type: 'number', 
+                                        name: 'menu', 
+                                        id: 'menu', 
+                                        value: prices.menu, 
+                                        onChange: handlePriceChange, 
+                                        className: 'block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+                                        placeholder: '0.00'
+                                    })
+                                ])
+                            ]),
+                            h('div', {}, [
+                                h('label', { htmlFor: 'vianda', className: 'block text-sm font-medium text-gray-700' }, 'Precio Servicio Vianda'),
+                                h('div', { className: 'mt-1 relative rounded-md shadow-sm' }, [
+                                    h('div', { className: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3' }, [
+                                        h('span', { className: 'text-gray-500 sm:text-sm' }, '$')
+                                    ]),
+                                    h('input', { 
+                                        type: 'number', 
+                                        name: 'vianda', 
+                                        id: 'vianda', 
+                                        value: prices.vianda, 
+                                        onChange: handlePriceChange, 
+                                        className: 'block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+                                        placeholder: '0.00'
+                                    })
+                                ])
+                            ])
+                        ]),
+                        h('button', { 
+                            onClick: () => setIsSettingsOpen(false), 
+                            className: 'mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors' 
+                        }, 'Guardar')
+                    ])
+                ])
+            ]);
         }
 
-        ReactDOM.render(<App />, document.getElementById('root'));
+        // Render the app
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
     </script>
 </body>
 </html>
