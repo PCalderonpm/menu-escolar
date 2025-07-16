@@ -396,22 +396,8 @@
             ]);
         }
 
-        // Render the app when everything is loaded
-        function initApp() {
-            if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined' && (window.lucide || window.LucideReact)) {
-                ReactDOM.render(React.createElement(App), document.getElementById('root'));
-            } else {
-                // Retry in 100ms if libraries aren't loaded yet
-                setTimeout(initApp, 100);
-            }
-        }
-
-        // Initialize when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+        // Render the app
+        ReactDOM.render(React.createElement(App), document.getElementById('root'));
     </script>
 </body>
 </html>
