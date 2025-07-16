@@ -1,330 +1,370 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Settings, Utensils, Salad, X, Home, School } from 'lucide-react';
-
-// --- Helper Functions ---
-const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-const formatDate = (date) => date.toISOString().split('T')[0];
-
-// --- Mock Data (Simulating loaded CSVs) ---
-const initialSchoolMenu = {
-    "2025-07-16": "Milanesas de pollo con puré de papas",
-    "2025-07-17": "Fideos con salsa bolognesa",
-    "2025-07-18": "Pescado al horno con verduras",
-    "2025-07-21": "Tarta de jamón y queso",
-    "2025-07-22": "Guiso de lentejas",
-    "2025-07-23": "Pollo a la portuguesa",
-    "2025-07-24": "Pastel de papa",
-    "2025-07-25": "Pizza casera",
-};
-
-const dinnerSuggestions = [
-    "Sopa de verduras casera", "Ensalada completa con huevo y atún", "Tarta de espinaca y ricota",
-    "Omelette de champiñones", "Wrap de pollo y vegetales", "Brócoli gratinado con queso",
-    "Crema de calabaza", "Milanesa de soja con ensalada de tomate", "Revuelto de zapallitos",
-    "Pechuga de pollo a la plancha con quinoa"
-];
-
-const getRandomDinner = () => dinnerSuggestions[Math.floor(Math.random() * dinnerSuggestions.length)];
-
-// --- Main App Component ---
-export default function App() {
-    // --- State Management ---
-    const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 15)); // Start in July 2025 for demo
-    const [monthData, setMonthData] = useState({});
-    const [selectedDay, setSelectedDay] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [prices, setPrices] = useState({ menu: 2500, vianda: 1200 });
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    // --- Effects ---
-    useEffect(() => {
-        // Initialize month data on month change
-        const daysInMonth = getDaysInMonth(year, month);
-        const today = new Date();
-        const todayStr = formatDate(today);
-
-        setMonthData(prevData => {
-            const newData = { ...prevData };
-            for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(year, month, i);
-                const dateStr = formatDate(date);
-                if (!newData[dateStr]) {
-                    newData[dateStr] = {
-                        status: date > today && dateStr !== todayStr ? 'futuro' : 'pendiente',
-                        schoolMenu: initialSchoolMenu[dateStr] || 'No disponible',
-                        dinnerSuggestion: ''
-                    };
-                }
-            }
-            return newData;
-        });
-    }, [year, month]);
-
-    // --- Memoized Calculations for Performance ---
-    const calendarGrid = useMemo(() => {
-        const daysInMonth = getDaysInMonth(year, month);
-        let firstDay = getFirstDayOfMonth(year, month);
-        firstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Monday start
-
-        const grid = [];
-        for (let i = 0; i < firstDay; i++) {
-            grid.push({ key: `empty-${i}`, type: 'empty' });
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Menú Escolar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel to transpile JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.292.0/dist/lucide-react.js"></script>
+    <style>
+        /* Adding some keyframe animations for modals */
+        @keyframes scale-up {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dateStr = formatDate(new Date(year, month, i));
-            grid.push({ key: dateStr, type: 'day', day: i, date: dateStr });
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        return grid;
-    }, [year, month]);
+        .animate-scale-up { animation: scale-up 0.2s ease-out forwards; }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
 
-    const summary = useMemo(() => {
-        return Object.values(monthData).reduce((acc, day) => {
-            if (day.status === 'menu') acc.menuDays++;
-            if (day.status === 'vianda') acc.viandaDays++;
-            return acc;
-        }, { menuDays: 0, viandaDays: 0 });
-    }, [monthData]);
+    <script type="text/babel">
+        // Make sure to use window.lucide for icons
+        const { ChevronLeft, ChevronRight, Settings, Utensils, Salad, X, Home, School } = window.lucide;
+        const { useState, useEffect, useMemo } = React;
 
-    const totalCost = useMemo(() => {
-        return (summary.menuDays * prices.menu) + (summary.viandaDays * prices.vianda);
-    }, [summary, prices]);
+        // --- Helper Functions ---
+        const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+        const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+        const formatDate = (date) => date.toISOString().split('T')[0];
 
-
-    // --- Event Handlers ---
-    const handleDayClick = (dateStr) => {
-        if (monthData[dateStr]?.status === 'futuro') return; // Don't open modal for future days
-        setSelectedDay(dateStr);
-        setIsModalOpen(true);
-    };
-
-    const handleStatusChange = (status) => {
-        if (!selectedDay) return;
-        setMonthData(prev => ({
-            ...prev,
-            [selectedDay]: {
-                ...prev[selectedDay],
-                status: status,
-                dinnerSuggestion: (status === 'menu' || status === 'vianda') ? getRandomDinner() : ''
-            }
-        }));
-        setIsModalOpen(false);
-        setSelectedDay(null);
-    };
-
-    const changeMonth = (offset) => {
-        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 15));
-    };
-    
-    const handlePriceChange = (e) => {
-        const { name, value } = e.target;
-        setPrices(prev => ({...prev, [name]: Number(value) }));
-    }
-
-    // --- UI Rendering ---
-    const DayCell = ({ dayInfo }) => {
-        if (dayInfo.type === 'empty') {
-            return <div className="border rounded-lg bg-gray-50"></div>;
-        }
-
-        const { day, date } = dayInfo;
-        const data = monthData[date] || {};
-        const isWeekend = [0, 6].includes(new Date(date).getDay());
-
-        const statusStyles = {
-            pendiente: 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200',
-            menu: 'bg-green-100 border-green-300 text-green-800',
-            vianda: 'bg-blue-100 border-blue-300 text-blue-800',
-            'sin-clases': 'bg-gray-200 border-gray-300 text-gray-600',
-            falta: 'bg-red-100 border-red-300 text-red-800',
-            futuro: 'bg-white border-gray-200 text-gray-400',
+        // --- Mock Data (Simulating loaded CSVs) ---
+        const initialSchoolMenu = {
+            "2025-07-16": "Milanesas de pollo con puré de papas",
+            "2025-07-17": "Fideos con salsa bolognesa",
+            "2025-07-18": "Pescado al horno con verduras",
+            "2025-07-21": "Tarta de jamón y queso",
+            "2025-07-22": "Guiso de lentejas",
+            "2025-07-23": "Pollo a la portuguesa",
+            "2025-07-24": "Pastel de papa",
+            "2025-07-25": "Pizza casera",
         };
 
-        const statusText = {
-            menu: 'Comedor',
-            vianda: 'Vianda',
-            'sin-clases': 'Sin Clases',
-            falta: 'Falta',
-        }
+        const dinnerSuggestions = [
+            "Sopa de verduras casera", "Ensalada completa con huevo y atún", "Tarta de espinaca y ricota",
+            "Omelette de champiñones", "Wrap de pollo y vegetales", "Brócoli gratinado con queso",
+            "Crema de calabaza", "Milanesa de soja con ensalada de tomate", "Revuelto de zapallitos",
+            "Pechuga de pollo a la plancha con quinoa"
+        ];
 
-        return (
-            <div
-                onClick={() => handleDayClick(date)}
-                className={`relative p-2 border rounded-lg cursor-pointer transition-all duration-200 h-28 flex flex-col ${statusStyles[data.status] || ''} ${isWeekend && data.status === 'pendiente' ? 'bg-gray-100' : ''}`}
-            >
-                <span className="font-bold text-gray-700">{day}</span>
-                <div className="mt-1 text-xs grow overflow-hidden">
-                    {data.status !== 'pendiente' && data.status !== 'futuro' && (
-                        <p className="font-semibold">{statusText[data.status]}</p>
-                    )}
-                </div>
-                {(data.status === 'menu' || data.status === 'vianda') && (
-                    <div className="absolute bottom-1 right-1 flex items-center gap-1 text-xs">
-                        {data.status === 'menu' && <Utensils size={12} className="text-green-600"/>}
-                        {data.status === 'vianda' && <Salad size={12} className="text-blue-600"/>}
-                    </div>
-                )}
-            </div>
-        );
-    };
+        const getRandomDinner = () => dinnerSuggestions[Math.floor(Math.random() * dinnerSuggestions.length)];
 
-    return (
-        <div className="bg-gray-50 min-h-screen font-sans p-4 md:p-8 text-gray-800">
-            <div className="max-w-7xl mx-auto">
-                {/* --- Header --- */}
-                <header className="flex flex-col md:flex-row justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-700 mb-4 md:mb-0">Gestor de Menú Escolar</h1>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center bg-white rounded-lg shadow-sm p-2">
-                            <button onClick={() => changeMonth(-1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronLeft/></button>
-                            <h2 className="text-xl font-semibold w-48 text-center capitalize">
-                                {currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
-                            </h2>
-                            <button onClick={() => changeMonth(1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronRight/></button>
+        // --- Main App Component ---
+        function App() {
+            // --- State Management ---
+            const [currentDate, setCurrentDate] = useState(new Date(2025, 6, 16)); // Start in July 2025 for demo
+            const [monthData, setMonthData] = useState({});
+            const [selectedDay, setSelectedDay] = useState(null);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [prices, setPrices] = useState({ menu: 2500, vianda: 1200 });
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // --- Effects ---
+            useEffect(() => {
+                const daysInMonth = getDaysInMonth(year, month);
+                const today = new Date();
+                const todayStr = formatDate(today);
+
+                setMonthData(prevData => {
+                    const newData = { ...prevData };
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const date = new Date(year, month, i);
+                        const dateStr = formatDate(date);
+                        if (!newData[dateStr]) {
+                             // Logic to determine status
+                            let status = 'pendiente';
+                            const dayOfWeek = date.getDay();
+                            // Mark past weekends as 'sin-clases' if they are still 'pendiente'
+                            if (date < today && (dayOfWeek === 0 || dayOfWeek === 6)) {
+                                status = 'sin-clases';
+                            }
+                            // Mark future days
+                            if (date > today && dateStr !== todayStr) {
+                                status = 'futuro';
+                            }
+                            
+                            newData[dateStr] = {
+                                status: status,
+                                schoolMenu: initialSchoolMenu[dateStr] || 'No disponible',
+                                dinnerSuggestion: ''
+                            };
+                        }
+                    }
+                    return newData;
+                });
+            }, [year, month]);
+
+            // --- Memoized Calculations for Performance ---
+            const calendarGrid = useMemo(() => {
+                const daysInMonth = getDaysInMonth(year, month);
+                let firstDay = getFirstDayOfMonth(year, month);
+                firstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust to Monday start
+
+                const grid = [];
+                for (let i = 0; i < firstDay; i++) {
+                    grid.push({ key: `empty-${i}`, type: 'empty' });
+                }
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dateStr = formatDate(new Date(year, month, i));
+                    grid.push({ key: dateStr, type: 'day', day: i, date: dateStr });
+                }
+                return grid;
+            }, [year, month]);
+
+            const summary = useMemo(() => {
+                return Object.entries(monthData).reduce((acc, [date, day]) => {
+                    const currentMonth = new Date(year, month).getMonth();
+                    const entryMonth = new Date(date).getMonth();
+                    if(currentMonth === entryMonth) {
+                        if (day.status === 'menu') acc.menuDays++;
+                        if (day.status === 'vianda') acc.viandaDays++;
+                    }
+                    return acc;
+                }, { menuDays: 0, viandaDays: 0 });
+            }, [monthData, year, month]);
+
+            const totalCost = useMemo(() => {
+                return (summary.menuDays * prices.menu) + (summary.viandaDays * prices.vianda);
+            }, [summary, prices]);
+
+
+            // --- Event Handlers ---
+            const handleDayClick = (dateStr) => {
+                if (monthData[dateStr]?.status === 'futuro') return;
+                setSelectedDay(dateStr);
+                setIsModalOpen(true);
+            };
+
+            const handleStatusChange = (status) => {
+                if (!selectedDay) return;
+                setMonthData(prev => ({
+                    ...prev,
+                    [selectedDay]: {
+                        ...prev[selectedDay],
+                        status: status,
+                        dinnerSuggestion: (status === 'menu' || status === 'vianda') ? getRandomDinner() : ''
+                    }
+                }));
+                setIsModalOpen(false);
+                setSelectedDay(null);
+            };
+
+            const changeMonth = (offset) => {
+                setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 15));
+            };
+            
+            const handlePriceChange = (e) => {
+                const { name, value } = e.target;
+                setPrices(prev => ({...prev, [name]: Number(value) }));
+            }
+
+            // --- UI Rendering ---
+            const DayCell = ({ dayInfo }) => {
+                if (dayInfo.type === 'empty') {
+                    return <div className="border rounded-lg bg-gray-100"></div>;
+                }
+
+                const { day, date } = dayInfo;
+                const data = monthData[date] || {};
+                const isWeekend = [0, 6].includes(new Date(date + 'T00:00:00').getUTCDay());
+
+                const statusStyles = {
+                    pendiente: 'bg-yellow-100 border-yellow-300 hover:bg-yellow-200',
+                    menu: 'bg-green-100 border-green-300 text-green-800',
+                    vianda: 'bg-blue-100 border-blue-300 text-blue-800',
+                    'sin-clases': 'bg-gray-200 border-gray-400 text-gray-600',
+                    falta: 'bg-red-100 border-red-300 text-red-800',
+                    futuro: 'bg-white border-gray-200 text-gray-400 cursor-not-allowed',
+                };
+
+                const statusText = {
+                    menu: 'Comedor',
+                    vianda: 'Vianda',
+                    'sin-clases': 'Sin Clases',
+                    falta: 'Faltó',
+                }
+
+                return (
+                    <div
+                        onClick={() => handleDayClick(date)}
+                        className={`relative p-2 border rounded-lg transition-all duration-200 h-28 flex flex-col ${data.status !== 'futuro' ? 'cursor-pointer' : ''} ${statusStyles[data.status] || ''} ${isWeekend && (data.status === 'pendiente' || data.status === 'futuro') ? 'bg-gray-100' : ''}`}
+                    >
+                        <span className="font-bold text-gray-700">{day}</span>
+                        <div className="mt-1 text-xs grow overflow-hidden">
+                            {data.status !== 'pendiente' && data.status !== 'futuro' && (
+                                <p className="font-semibold">{statusText[data.status]}</p>
+                            )}
                         </div>
-                        <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100">
-                            <Settings className="text-gray-600"/>
-                        </button>
-                    </div>
-                </header>
-
-                {/* --- Main Content --- */}
-                <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* --- Calendar --- */}
-                    <div className="lg:col-span-2 bg-white p-4 rounded-xl shadow-md">
-                        <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-gray-500 mb-2">
-                            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-                        </div>
-                        <div className="grid grid-cols-7 gap-2">
-                            {calendarGrid.map(dayInfo => <DayCell key={dayInfo.key} dayInfo={dayInfo} />)}
-                        </div>
-                    </div>
-
-                    {/* --- Summary & Info --- */}
-                    <div className="space-y-6">
-                        <div className="bg-white p-6 rounded-xl shadow-md">
-                            <h3 className="text-lg font-bold mb-4 border-b pb-2">Resumen del Mes</h3>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Días de Comedor:</span>
-                                    <span className="font-bold text-green-600">{summary.menuDays}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Días de Vianda:</span>
-                                    <span className="font-bold text-blue-600">{summary.viandaDays}</span>
-                                </div>
-                                <hr className="my-2"/>
-                                <div className="flex justify-between items-center text-lg">
-                                    <span className="font-semibold text-gray-700">Costo Total:</span>
-                                    <span className="font-bold text-indigo-600">
-                                        {totalCost.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {selectedDay && monthData[selectedDay] && (
-                            <div className="bg-white p-6 rounded-xl shadow-md animate-fade-in">
-                                <h3 className="text-lg font-bold mb-4 border-b pb-2">
-                                    Detalle del {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}
-                                </h3>
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex items-start gap-3">
-                                        <School size={18} className="text-gray-500 mt-1"/>
-                                        <div>
-                                            <p className="font-semibold">Almuerzo Escolar:</p>
-                                            <p className="text-gray-600">{monthData[selectedDay].schoolMenu}</p>
-                                        </div>
-                                    </div>
-                                    {monthData[selectedDay].dinnerSuggestion && (
-                                        <div className="flex items-start gap-3 pt-2 border-t mt-2">
-                                            <Home size={18} className="text-gray-500 mt-1"/>
-                                            <div>
-                                                <p className="font-semibold">Sugerencia para la Cena:</p>
-                                                <p className="text-gray-600">{monthData[selectedDay].dinnerSuggestion}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                        {(data.status === 'menu' || data.status === 'vianda') && (
+                            <div className="absolute bottom-1 right-1 flex items-center gap-1 text-xs">
+                                {data.status === 'menu' && <Utensils size={12} className="text-green-600"/>}
+                                {data.status === 'vianda' && <Salad size={12} className="text-blue-600"/>}
                             </div>
                         )}
                     </div>
-                </main>
-            </div>
+                );
+            };
 
-            {/* --- Modals --- */}
-            {isModalOpen && selectedDay && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">
-                                Registrar Día: {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
-                            </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">Menú del colegio: <span className="font-semibold">{monthData[selectedDay]?.schoolMenu}</span></p>
-                        <p className="text-sm text-gray-600 mb-6">¿Qué opción corresponde para este día?</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button onClick={() => handleStatusChange('menu')} className="p-4 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">Comedor</button>
-                            <button onClick={() => handleStatusChange('vianda')} className="p-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors">Vianda</button>
-                            <button onClick={() => handleStatusChange('sin-clases')} className="p-4 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">Sin Clases</button>
-                            <button onClick={() => handleStatusChange('falta')} className="p-4 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors">Faltó</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            {isSettingsOpen && (
-                 <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold">Configuración de Precios</h3>
-                            <button onClick={() => setIsSettingsOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-6">Ajusta los valores para el mes actual.</p>
-                        <div className="space-y-4">
-                            <div>
-                                <label htmlFor="menu" className="block text-sm font-medium text-gray-700">Precio Menú Diario</label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">$</span>
-                                    </div>
-                                    <input type="number" name="menu" id="menu" value={prices.menu} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
+            return (
+                <div className="font-sans p-4 md:p-8 text-gray-800">
+                    <div className="max-w-7xl mx-auto">
+                        {/* --- Header --- */}
+                        <header className="flex flex-col md:flex-row justify-between items-center mb-6">
+                            <h1 className="text-3xl font-bold text-gray-700 mb-4 md:mb-0">Gestor de Menú Escolar</h1>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center bg-white rounded-lg shadow-sm p-2">
+                                    <button onClick={() => changeMonth(-1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronLeft/></button>
+                                    <h2 className="text-xl font-semibold w-48 text-center capitalize">
+                                        {currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
+                                    </h2>
+                                    <button onClick={() => changeMonth(1)} className="p-2 rounded-md hover:bg-gray-100"><ChevronRight/></button>
+                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-white rounded-lg shadow-sm hover:bg-gray-100">
+                                    <Settings className="text-gray-600"/>
+                                </button>
+                            </div>
+                        </header>
+
+                        {/* --- Main Content --- */}
+                        <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* --- Calendar --- */}
+                            <div className="lg:col-span-2 bg-white p-4 rounded-xl shadow-md">
+                                <div className="grid grid-cols-7 gap-1 text-center font-semibold text-sm text-gray-500 mb-2">
+                                    <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+                                </div>
+                                <div className="grid grid-cols-7 gap-2">
+                                    {calendarGrid.map(dayInfo => <DayCell key={dayInfo.key} dayInfo={dayInfo} />)}
                                 </div>
                             </div>
-                             <div>
-                                <label htmlFor="vianda" className="block text-sm font-medium text-gray-700">Precio Servicio Vianda</label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <span className="text-gray-500 sm:text-sm">$</span>
+
+                            {/* --- Summary & Info --- */}
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-xl shadow-md">
+                                    <h3 className="text-lg font-bold mb-4 border-b pb-2">Resumen del Mes</h3>
+                                    <div className="space-y-3 text-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600">Días de Comedor:</span>
+                                            <span className="font-bold text-green-600">{summary.menuDays}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-600">Días de Vianda:</span>
+                                            <span className="font-bold text-blue-600">{summary.viandaDays}</span>
+                                        </div>
+                                        <hr className="my-2"/>
+                                        <div className="flex justify-between items-center text-lg">
+                                            <span className="font-semibold text-gray-700">Costo Total:</span>
+                                            <span className="font-bold text-indigo-600">
+                                                {totalCost.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <input type="number" name="vianda" id="vianda" value={prices.vianda} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
+                                </div>
+
+                                {selectedDay && monthData[selectedDay] && (
+                                    <div className="bg-white p-6 rounded-xl shadow-md animate-fade-in">
+                                        <h3 className="text-lg font-bold mb-4 border-b pb-2">
+                                            Detalle del {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}
+                                        </h3>
+                                        <div className="space-y-3 text-sm">
+                                            <div className="flex items-start gap-3">
+                                                <School size={18} className="text-gray-500 mt-1"/>
+                                                <div>
+                                                    <p className="font-semibold">Almuerzo Escolar:</p>
+                                                    <p className="text-gray-600">{monthData[selectedDay].schoolMenu}</p>
+                                                </div>
+                                            </div>
+                                            {monthData[selectedDay].dinnerSuggestion && (
+                                                <div className="flex items-start gap-3 pt-2 border-t mt-2">
+                                                    <Home size={18} className="text-gray-500 mt-1"/>
+                                                    <div>
+                                                        <p className="font-semibold">Sugerencia para la Cena:</p>
+                                                        <p className="text-gray-600">{monthData[selectedDay].dinnerSuggestion}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </main>
+                    </div>
+
+                    {/* --- Modals --- */}
+                    {isModalOpen && selectedDay && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold">
+                                        Registrar Día: {new Date(selectedDay + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}
+                                    </h3>
+                                    <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-2">Menú del colegio: <span className="font-semibold">{monthData[selectedDay]?.schoolMenu}</span></p>
+                                <p className="text-sm text-gray-600 mb-6">¿Qué opción corresponde para este día?</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={() => handleStatusChange('menu')} className="p-4 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors">Comedor</button>
+                                    <button onClick={() => handleStatusChange('vianda')} className="p-4 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition-colors">Vianda</button>
+                                    <button onClick={() => handleStatusChange('sin-clases')} className="p-4 bg-gray-400 text-white rounded-lg font-semibold hover:bg-gray-500 transition-colors">Sin Clases</button>
+                                    <button onClick={() => handleStatusChange('falta')} className="p-4 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors">Faltó</button>
                                 </div>
                             </div>
                         </div>
-                         <button onClick={() => setIsSettingsOpen(false)} className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-                            Guardar
-                        </button>
-                    </div>
+                    )}
+                    
+                    {isSettingsOpen && (
+                         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm animate-scale-up">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-xl font-bold">Configuración de Precios</h3>
+                                    <button onClick={() => setIsSettingsOpen(false)} className="p-1 rounded-full hover:bg-gray-200"><X size={20}/></button>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-6">Ajusta los valores para el mes actual.</p>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="menu" className="block text-sm font-medium text-gray-700">Precio Menú Diario</label>
+                                        <div className="mt-1 relative rounded-md shadow-sm">
+                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                <span className="text-gray-500 sm:text-sm">$</span>
+                                            </div>
+                                            <input type="number" name="menu" id="menu" value={prices.menu} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
+                                        </div>
+                                    </div>
+                                     <div>
+                                        <label htmlFor="vianda" className="block text-sm font-medium text-gray-700">Precio Servicio Vianda</label>
+                                        <div className="mt-1 relative rounded-md shadow-sm">
+                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                <span className="text-gray-500 sm:text-sm">$</span>
+                                            </div>
+                                            <input type="number" name="vianda" id="vianda" value={prices.vianda} onChange={handlePriceChange} className="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="0.00"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <button onClick={() => setIsSettingsOpen(false)} className="mt-6 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                                    Guardar
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-            
-            {/* Adding some keyframe animations for modals */}
-            <style>{`
-              @keyframes scale-up {
-                from { transform: scale(0.95); opacity: 0; }
-                to { transform: scale(1); opacity: 1; }
-              }
-              @keyframes fade-in {
-                from { opacity: 0; }
-                to { opacity: 1; }
-              }
-              .animate-scale-up { animation: scale-up 0.2s ease-out forwards; }
-              .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
-            `}</style>
-        </div>
-    );
-}
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
