@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { Prices } from '../types';
+import type { Prices } from '../types.ts';
 
 interface SettingsProps {
     prices: Prices;

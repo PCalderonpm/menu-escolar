@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { getDinnerSuggestion } from '../services/geminiService';
-import type { DinnerSuggestion } from '../types';
-import { SparklesIcon } from './Icons';
+import { getDinnerSuggestion } from '../services/geminiService.ts';
+import type { DinnerSuggestion } from '../types.ts';
+import { SparklesIcon } from './Icons.tsx';
 
 const LoadingSpinner: React.FC = () => (
     <div className="flex justify-center items-center space-x-2">

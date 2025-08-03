@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
-import type { DaySelection, Prices } from '../types';
-import { MealType } from '../types';
+import type { DaySelection, Prices } from '../types.ts';
+import { MealType } from '../types.ts';
 
 interface DashboardProps {
     selections: DaySelection;

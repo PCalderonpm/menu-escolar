@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MealType } from '../types';
-import { ChevronLeftIcon, ChevronRightIcon } from './Icons';
+import { MealType } from '../types.ts';
+import { ChevronLeftIcon, ChevronRightIcon } from './Icons.tsx';
 
 interface CalendarProps {
     currentDate: Date;

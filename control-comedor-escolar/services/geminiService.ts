@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { DinnerSuggestion } from '../types';
+import type { DinnerSuggestion } from '../types.ts';
 
 if (!process.env.API_KEY) {
     console.warn("API_KEY environment variable not set. Dinner suggestions will not work.");

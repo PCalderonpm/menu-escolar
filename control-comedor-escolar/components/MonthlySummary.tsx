@@ -1,8 +1,8 @@
 
 import React, { useMemo } from 'react';
-import type { DaySelection, Prices } from '../types';
-import { MealType } from '../types';
-import { XMarkIcon, DocumentTextIcon } from './Icons';
+import type { DaySelection, Prices } from '../types.ts';
+import { MealType } from '../types.ts';
+import { XMarkIcon, DocumentTextIcon } from './Icons.tsx';
 
 interface MonthlySummaryProps {
     isOpen: boolean;

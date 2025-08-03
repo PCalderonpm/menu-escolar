@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { DaySelection, Prices } from './types';
-import { MealType } from './types';
-import { Calendar } from './components/Calendar';
-import { Dashboard } from './components/Dashboard';
-import { Settings } from './components/Settings';
-import { DinnerSuggester } from './components/DinnerSuggester';
-import { MonthlySummary } from './components/MonthlySummary';
-import { DocumentTextIcon } from './components/Icons';
+import type { DaySelection, Prices } from './types.ts';
+import { MealType } from './types.ts';
+import { Calendar } from './components/Calendar.tsx';
+import { Dashboard } from './components/Dashboard.tsx';
+import { Settings } from './components/Settings.tsx';
+import { DinnerSuggester } from './components/DinnerSuggester.tsx';
+import { MonthlySummary } from './components/MonthlySummary.tsx';
+import { DocumentTextIcon } from './components/Icons.tsx';
 
 // Helper to get initial state from localStorage
 const getInitialState = <T,>(key: string, defaultValue: T): T => {
