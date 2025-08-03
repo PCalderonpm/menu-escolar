@@ -1,0 +1,5 @@
+{
+  "name": "Control Comedor Escolar",
+  "description": "Una aplicación para gestionar los gastos del comedor escolar de tu hijo, comparar costos y obtener sugerencias de cenas saludables basadas en el almuerzo del día.",
+  "requestFramePermissions": []
+}
