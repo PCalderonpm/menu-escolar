@@ -2,7 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { DinnerSuggestion } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("La clave API de Gemini no está configurada. Por favor, configura la variable de entorno VITE_GEMINI_API_KEY.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 const dinnerSuggestionSchema = {
     type: Type.OBJECT,
@@ -33,10 +38,6 @@ const dinnerSuggestionSchema = {
 };
 
 export const getDinnerSuggestion = async (lunch: string): Promise<DinnerSuggestion[]> => {
-    if (!process.env.API_KEY) {
-        throw new Error("La clave API de Gemini no está configurada. Por favor, configura la variable de entorno API_KEY.");
-    }
-
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
