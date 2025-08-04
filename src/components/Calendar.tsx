@@ -29,11 +29,10 @@ interface DayCellProps {
     isCurrentMonth: boolean;
     isToday: boolean;
     selection?: MealType;
-    menu?: string;
     onClick: () => void;
 }
 
-const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selection, menu, onClick }) => {
+const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selection, onClick }) => {
     const dayClass = isCurrentMonth ? 'text-slate-800' : 'text-slate-400';
     const todayClass = isToday ? 'ring-2 ring-indigo-500 ring-offset-2' : '';
     const colorClass = getMealTypeColor(selection);
@@ -47,7 +46,7 @@ const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selecti
                 {day.getDate()}
             </span>
             {isToday && <div className={`absolute top-1 left-2 w-1.5 h-1.5 bg-indigo-500 rounded-full ${todayClass}`}></div>}
-            {menu && <p className="text-xs mt-2 font-semibold text-gray-700">{menu}</p>}
+            {selection && <p className="text-xs mt-2 font-semibold text-gray-700">{selection}</p>}
         </div>
     );
 };

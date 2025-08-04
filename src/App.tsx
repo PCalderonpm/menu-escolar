@@ -7,6 +7,7 @@ import { Dashboard } from './components/Dashboard';
 import { Settings } from './components/Settings';
 import { MenuUploader } from './components/MenuUploader';
 import { MonthlySummary } from './components/MonthlySummary';
+import { WeeklyMenuDisplay } from './components/WeeklyMenuDisplay';
 import { DocumentTextIcon } from './components/Icons';
 
 // Helper to get initial state from localStorage
@@ -78,6 +79,35 @@ const App: React.FC = () => {
         }));
     }, []);
 
+    const handleCopyWeekMenu = (weekNumber: 1 | 2) => {
+        const menuToCopy = weekNumber === 1 ? {
+            'Lunes': 'Milanesa con puré',
+            'Martes': 'Fideos con tuco',
+            'Miércoles': 'Pollo al horno con papas',
+            'Jueves': 'Tarta de jamón y queso',
+            'Viernes': 'Pescado con ensalada',
+        } : {
+            'Lunes': 'Guiso de lentejas',
+            'Martes': 'Empanadas de carne',
+            'Miércoles': 'Pastel de papa',
+            'Jueves': 'Pizza',
+            'Viernes': 'Canelones de verdura',
+        };
+
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1));
+
+        const newWeeklyMenu = { ...weeklyMenu };
+        Object.entries(menuToCopy).forEach(([day, menu]) => {
+            const date = new Date(startOfWeek);
+            const dayIndex = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].indexOf(day);
+            date.setDate(startOfWeek.getDate() + dayIndex);
+            const dateKey = date.toISOString().split('T')[0];
+            newWeeklyMenu[dateKey] = menu;
+        });
+        setWeeklyMenu(newWeeklyMenu);
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800">
             <header className="bg-white shadow-sm">
@@ -102,6 +132,7 @@ const App: React.FC = () => {
                             onDateChange={handleDateChange}
                             onSelectMeal={handleSelectMeal}
                         />
+                        <WeeklyMenuDisplay weeklyMenu={weeklyMenu} currentDate={currentDate} />
                     </div>
                     <div className="space-y-8">
                         <Dashboard selections={selections} prices={prices} currentDate={currentDate} />
@@ -111,7 +142,7 @@ const App: React.FC = () => {
                           studentName={studentName}
                           onStudentNameChange={handleStudentNameChange}
                         />
-                        <MenuUploader onAddMenu={handleAddMenu} />
+                        <MenuUploader onAddMenu={handleAddMenu} onCopyWeekMenu={handleCopyWeekMenu} />
                     </div>
                 </div>
             </main>

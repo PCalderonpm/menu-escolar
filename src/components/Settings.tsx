@@ -9,7 +9,7 @@ interface SettingsProps {
     onStudentNameChange: (name: string) => void;
 }
 
-const InputField: React.FC<{ label: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string; prefix?: string }> = ({ label, value, onChange, type = "text", prefix }) => (
+const InputField: React.FC<{ label: string; value: string | number; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string; prefix?: string; max?: number }> = ({ label, value, onChange, type = "text", prefix, max }) => (
     <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
         <div className="relative rounded-md shadow-sm">
@@ -18,6 +18,7 @@ const InputField: React.FC<{ label: string; value: string | number; onChange: (e
                 type={type}
                 value={value}
                 onChange={onChange}
+                max={max}
                 className={`block w-full rounded-md border-slate-300 ${prefix ? 'pl-7' : 'pl-3'} pr-3 py-2 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm`}
             />
         </div>
@@ -49,6 +50,7 @@ export const Settings: React.FC<SettingsProps> = ({ prices, onPriceChange, stude
                         onChange={(e) => handlePriceChange('menu', e.target.value)}
                         type="number"
                         prefix="$"
+                        max={999999}
                     />
                     <InputField
                         label="Valor Vianda"
@@ -56,6 +58,7 @@ export const Settings: React.FC<SettingsProps> = ({ prices, onPriceChange, stude
                         onChange={(e) => handlePriceChange('vianda', e.target.value)}
                         type="number"
                         prefix="$"
+                        max={999999}
                     />
                 </div>
                 <InputField
@@ -64,6 +67,7 @@ export const Settings: React.FC<SettingsProps> = ({ prices, onPriceChange, stude
                     onChange={(e) => handlePriceChange('fixed', e.target.value)}
                     type="number"
                     prefix="$"
+                    max={999999}
                 />
             </div>
         </div>
