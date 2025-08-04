@@ -135,7 +135,6 @@ const App: React.FC = () => {
                         <WeeklyMenuDisplay weeklyMenu={weeklyMenu} currentDate={currentDate} />
                     </div>
                     <div className="space-y-8">
-                        <Dashboard selections={selections} prices={prices} currentDate={currentDate} />
                         <Settings 
                           prices={prices} 
                           onPriceChange={handlePriceChange}
@@ -143,6 +142,7 @@ const App: React.FC = () => {
                           onStudentNameChange={handleStudentNameChange}
                         />
                         <MenuUploader onAddMenu={handleAddMenu} onCopyWeekMenu={handleCopyWeekMenu} />
+                        <Dashboard selections={selections} prices={prices} currentDate={currentDate} />
                     </div>
                 </div>
             </main>

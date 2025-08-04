@@ -90,6 +90,30 @@ export const MonthlySummary: React.FC<MonthlySummaryProps> = ({ isOpen, onClose,
                     <div className="bg-amber-100 p-3 rounded-lg"><span className="font-bold text-amber-800 text-2xl">{stats.noClassesDays}</span><p className="text-sm text-amber-700">Sin Clases</p></div>
                 </div>
 
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-slate-800 mb-4">Detalle por Día</h3>
+                    <div className="space-y-2 text-slate-700 max-h-60 overflow-y-auto border border-slate-200 p-3 rounded-md">
+                        {Object.entries(selections)
+                            .filter(([date]) => {
+                                const d = new Date(date);
+                                return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+                            })
+                            .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
+                            .map(([date, mealType]) => (
+                                <div key={date} className="flex justify-between items-center">
+                                    <p className="font-medium">{new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}:</p>
+                                    <p>{mealType}</p>
+                                </div>
+                            ))}
+                        {Object.entries(selections)
+                            .filter(([date]) => {
+                                const d = new Date(date);
+                                return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+                            })
+                            .length === 0 && <p className="text-center text-slate-500">No hay selecciones para este mes.</p>}
+                    </div>
+                </div>
+
                 <div className="border-t border-slate-200 pt-6">
                     <h3 className="text-xl font-semibold text-slate-800 mb-4">Desglose de Cargos</h3>
                     <div className="space-y-3 text-slate-700">
