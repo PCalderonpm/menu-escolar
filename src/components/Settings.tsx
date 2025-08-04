@@ -27,8 +27,10 @@ const InputField: React.FC<{ label: string; value: string | number; onChange: (e
 export const Settings: React.FC<SettingsProps> = ({ prices, onPriceChange, studentName, onStudentNameChange }) => {
     
     const handlePriceChange = (field: keyof Prices, value: string) => {
-        const numValue = parseFloat(value) || 0;
-        onPriceChange({ ...prices, [field]: numValue });
+        const numValue = value === '' ? '' : parseFloat(value);
+        if (!isNaN(numValue as number)) {
+            onPriceChange({ ...prices, [field]: numValue as number });
+        }
     };
 
     return (

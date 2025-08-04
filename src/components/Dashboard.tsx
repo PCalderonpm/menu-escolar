@@ -26,6 +26,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ selections, prices, curren
 
         const menuDays = monthSelections.filter(([, meal]) => meal === MealType.Menu).length;
         const viandaDays = monthSelections.filter(([, meal]) => meal === MealType.Vianda).length;
+        const absentDays = monthSelections.filter(([, meal]) => meal === MealType.Absent).length;
+        const noClassesDays = monthSelections.filter(([, meal]) => meal === MealType.NoClasses).length;
 
         const menuCost = menuDays * prices.menu;
         const viandaCost = viandaDays * prices.vianda;
@@ -33,7 +35,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ selections, prices, curren
 
         const savings = prices.fixed > 0 ? prices.fixed - totalCost : 0;
 
-        return { menuDays, viandaDays, totalCost, savings };
+        return { menuDays, viandaDays, absentDays, noClassesDays, totalCost, savings };
     }, [selections, prices, currentDate]);
 
     const formatCurrency = (value: number) => {
