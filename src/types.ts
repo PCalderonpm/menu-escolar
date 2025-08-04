@@ -16,8 +16,6 @@ export interface Prices {
   fixed: number;
 }
 
-export interface DinnerSuggestion {
-  name: string;
-  ingredients: string[];
-  steps: string[];
+export interface WeeklyMenu {
+  [date: string]: string;
 }

@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { DaySelection, Prices } from './types';
+import type { DaySelection, Prices, WeeklyMenu } from './types';
 import { MealType } from './types';
 import { Calendar } from './components/Calendar';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './components/Settings';
-import { DinnerSuggester } from './components/DinnerSuggester';
+import { MenuUploader } from './components/MenuUploader';
 import { MonthlySummary } from './components/MonthlySummary';
 import { DocumentTextIcon } from './components/Icons';
 
@@ -27,6 +27,7 @@ const App: React.FC = () => {
     const [selections, setSelections] = useState<DaySelection>(() => getInitialState<DaySelection>('mealSelections', {}));
     const [prices, setPrices] = useState<Prices>(() => getInitialState<Prices>('mealPrices', { menu: 5, vianda: 3.5, fixed: 120 }));
     const [studentName, setStudentName] = useState<string>(() => getInitialState<string>('studentName', ''));
+    const [weeklyMenu, setWeeklyMenu] = useState<WeeklyMenu>(() => getInitialState<WeeklyMenu>('weeklyMenu', {}));
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
     // Persist state to localStorage whenever it changes
@@ -41,6 +42,10 @@ const App: React.FC = () => {
     useEffect(() => {
         localStorage.setItem('studentName', JSON.stringify(studentName));
     }, [studentName]);
+
+    useEffect(() => {
+        localStorage.setItem('weeklyMenu', JSON.stringify(weeklyMenu));
+    }, [weeklyMenu]);
 
     const handleSelectMeal = useCallback((date: string, mealType: MealType) => {
         setSelections(prev => {
@@ -66,6 +71,13 @@ const App: React.FC = () => {
         setCurrentDate(date);
     }, []);
 
+    const handleAddMenu = useCallback((date: string, menu: string) => {
+        setWeeklyMenu(prev => ({
+            ...prev,
+            [date]: menu
+        }));
+    }, []);
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800">
             <header className="bg-white shadow-sm">
@@ -86,10 +98,10 @@ const App: React.FC = () => {
                         <Calendar
                             currentDate={currentDate}
                             selections={selections}
+                            weeklyMenu={weeklyMenu}
                             onDateChange={handleDateChange}
                             onSelectMeal={handleSelectMeal}
                         />
-                         <DinnerSuggester />
                     </div>
                     <div className="space-y-8">
                         <Dashboard selections={selections} prices={prices} currentDate={currentDate} />
@@ -99,6 +111,7 @@ const App: React.FC = () => {
                           studentName={studentName}
                           onStudentNameChange={handleStudentNameChange}
                         />
+                        <MenuUploader onAddMenu={handleAddMenu} />
                     </div>
                 </div>
             </main>

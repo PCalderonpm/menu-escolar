@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MealType } from '../types';
+import { MealType, WeeklyMenu } from '../types';
 import { ChevronLeftIcon, ChevronRightIcon } from './Icons';
 
 interface CalendarProps {
     currentDate: Date;
     selections: Record<string, MealType>;
+    weeklyMenu: WeeklyMenu;
     onDateChange: (date: Date) => void;
     onSelectMeal: (date: string, mealType: MealType) => void;
 }
@@ -28,10 +29,11 @@ interface DayCellProps {
     isCurrentMonth: boolean;
     isToday: boolean;
     selection?: MealType;
+    menu?: string;
     onClick: () => void;
 }
 
-const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selection, onClick }) => {
+const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selection, menu, onClick }) => {
     const dayClass = isCurrentMonth ? 'text-slate-800' : 'text-slate-400';
     const todayClass = isToday ? 'ring-2 ring-indigo-500 ring-offset-2' : '';
     const colorClass = getMealTypeColor(selection);
@@ -39,12 +41,13 @@ const DayCell: React.FC<DayCellProps> = ({ day, isCurrentMonth, isToday, selecti
     return (
         <div 
             onClick={onClick}
-            className={`relative flex items-center justify-center h-14 cursor-pointer rounded-lg transition-colors duration-200 ${colorClass} ${dayClass}`}
+            className={`relative flex flex-col items-center justify-center h-24 cursor-pointer rounded-lg transition-colors duration-200 p-2 text-center ${colorClass} ${dayClass}`}
         >
             <span className={`absolute top-1 right-2 text-xs font-medium ${isCurrentMonth ? 'text-slate-600' : 'text-slate-400'}`}>
                 {day.getDate()}
             </span>
-            {isToday && <div className={`absolute bottom-1.5 w-1.5 h-1.5 bg-indigo-500 rounded-full ${todayClass}`}></div>}
+            {isToday && <div className={`absolute top-1 left-2 w-1.5 h-1.5 bg-indigo-500 rounded-full ${todayClass}`}></div>}
+            {menu && <p className="text-xs mt-2 font-semibold text-gray-700">{menu}</p>}
         </div>
     );
 };
@@ -93,7 +96,7 @@ const SelectionPopover: React.FC<SelectionPopoverProps> = ({ targetRef, onSelect
     );
 };
 
-export const Calendar: React.FC<CalendarProps> = ({ currentDate, selections, onDateChange, onSelectMeal }) => {
+export const Calendar: React.FC<CalendarProps> = ({ currentDate, selections, weeklyMenu, onDateChange, onSelectMeal }) => {
     const [popoverState, setPopoverState] = useState<{ date: Date, ref: React.RefObject<HTMLDivElement> } | null>(null);
     const dayRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
 
@@ -196,6 +199,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, selections, onD
                               isCurrentMonth={isCurrentMonth}
                               isToday={isToday}
                               selection={selections[dateKey]}
+                              menu={weeklyMenu[dateKey]}
                               onClick={() => handleDayClick(day, isCurrentMonth)}
                           />
                         </div>
