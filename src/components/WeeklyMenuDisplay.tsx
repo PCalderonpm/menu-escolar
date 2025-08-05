@@ -5,6 +5,7 @@ interface WeeklyMenuDisplayProps {
   weeklyMenu: WeeklyMenu;
   currentDate: Date;
   onAddMenu: (date: string, menu: string) => void;
+  onRepeatWeeks: () => void;
 }
 
 const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -35,7 +36,7 @@ const EditableMenu: React.FC<{ dateKey: string; menu: string; onSave: (date: str
   );
 };
 
-export const WeeklyMenuDisplay: React.FC<WeeklyMenuDisplayProps> = ({ weeklyMenu, currentDate, onAddMenu }) => {
+export const WeeklyMenuDisplay: React.FC<WeeklyMenuDisplayProps> = ({ weeklyMenu, currentDate, onAddMenu, onRepeatWeeks }) => {
   const renderWeek = (weekNumber: 1 | 2 | 3 | 4) => {
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1) + (weekNumber - 1) * 7);
@@ -67,7 +68,12 @@ export const WeeklyMenuDisplay: React.FC<WeeklyMenuDisplayProps> = ({ weeklyMenu
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-200">
-      <h3 className="text-xl font-bold text-slate-800 mb-4">Menú del Mes</h3>
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold text-slate-800">Menú del Mes</h3>
+            <button onClick={onRepeatWeeks} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Repetir Semanas 1 y 2
+            </button>
+        </div>
       <div className="space-y-6">
         {renderWeek(1)}
         {renderWeek(2)}
