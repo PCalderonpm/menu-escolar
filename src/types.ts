@@ -19,3 +19,10 @@ export interface Prices {
 export interface WeeklyMenu {
   [date: string]: string;
 }
+
+export interface MenuData {
+  selections: DaySelection;
+  prices: Prices;
+  studentName: string;
+  weeklyMenu: WeeklyMenu;
+}

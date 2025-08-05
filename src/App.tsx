@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { DaySelection, Prices, WeeklyMenu } from './types';
+import type { DaySelection, Prices, WeeklyMenu, MenuData } from './types';
 import { MealType } from './types';
 import { Calendar } from './components/Calendar';
 import { Dashboard } from './components/Dashboard';
@@ -7,44 +7,67 @@ import { Settings } from './components/Settings';
 import { MonthlySummary } from './components/MonthlySummary';
 import { WeeklyMenuDisplay } from './components/WeeklyMenuDisplay';
 import { DocumentTextIcon } from './components/Icons';
-
-// Helper to get initial state from localStorage
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    try {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue) {
-            return JSON.parse(storedValue);
-        }
-    } catch (error) {
-        console.error(`Error reading from localStorage key “${key}”:`, error);
-    }
-    return defaultValue;
-};
+import { getMenu, saveMenu } from './services/api';
+import { nanoid } from 'nanoid';
 
 const App: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [selections, setSelections] = useState<DaySelection>(() => getInitialState<DaySelection>('mealSelections', {}));
-    const [prices, setPrices] = useState<Prices>(() => getInitialState<Prices>('mealPrices', { menu: 5, vianda: 3.5, fixed: 120 }));
-    const [studentName, setStudentName] = useState<string>(() => getInitialState<string>('studentName', ''));
-    const [weeklyMenu, setWeeklyMenu] = useState<WeeklyMenu>(() => getInitialState<WeeklyMenu>('weeklyMenu', {}));
+    const [selections, setSelections] = useState<DaySelection>({});
+    const [prices, setPrices] = useState<Prices>({ menu: 5, vianda: 3.5, fixed: 120 });
+    const [studentName, setStudentName] = useState<string>('');
+    const [weeklyMenu, setWeeklyMenu] = useState<WeeklyMenu>({});
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+    const [menuId, setMenuId] = useState<string | null>(null);
 
-    // Persist state to localStorage whenever it changes
+    // Load data from API on initial render
     useEffect(() => {
-        localStorage.setItem('mealSelections', JSON.stringify(selections));
-    }, [selections]);
+        const loadMenu = async () => {
+            // Try to get menuId from URL or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('id');
 
-    useEffect(() => {
-        localStorage.setItem('mealPrices', JSON.stringify(prices));
-    }, [prices]);
+            if (!id) {
+                id = localStorage.getItem('menuId');
+            }
 
-    useEffect(() => {
-        localStorage.setItem('studentName', JSON.stringify(studentName));
-    }, [studentName]);
+            if (id) {
+                const data = await getMenu(id);
+                if (data) {
+                    setSelections(data.selections || {});
+                    setPrices(data.prices || { menu: 5, vianda: 3.5, fixed: 120 });
+                    setStudentName(data.studentName || '');
+                    setWeeklyMenu(data.weeklyMenu || {});
+                    setMenuId(id);
+                } else {
+                    // If ID exists but menu not found, generate new ID
+                    const newId = nanoid(10);
+                    setMenuId(newId);
+                    localStorage.setItem('menuId', newId);
+                    window.history.replaceState({}, '', `?id=${newId}`);
+                }
+            } else {
+                // No ID found, generate a new one
+                const newId = nanoid(10);
+                setMenuId(newId);
+                localStorage.setItem('menuId', newId);
+                window.history.replaceState({}, '', `?id=${newId}`);
+            }
+        };
+        loadMenu();
+    }, []);
 
+    // Save data to API whenever relevant state changes
     useEffect(() => {
-        localStorage.setItem('weeklyMenu', JSON.stringify(weeklyMenu));
-    }, [weeklyMenu]);
+        if (menuId) {
+            const dataToSave: MenuData = {
+                selections,
+                prices,
+                studentName,
+                weeklyMenu,
+            };
+            saveMenu(dataToSave, menuId);
+        }
+    }, [selections, prices, studentName, weeklyMenu, menuId]);
 
     const handleSelectMeal = useCallback((date: string, mealType: MealType) => {
         setSelections(prev => {
