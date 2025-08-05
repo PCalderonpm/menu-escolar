@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { DaySelection, Prices, WeeklyMenu } from './types';
 import { MealType } from './types';
 import { Calendar } from './components/Calendar';
 import { Dashboard } from './components/Dashboard';
 import { Settings } from './components/Settings';
-import { MenuUploader } from './components/MenuUploader';
 import { MonthlySummary } from './components/MonthlySummary';
 import { WeeklyMenuDisplay } from './components/WeeklyMenuDisplay';
 import { DocumentTextIcon } from './components/Icons';
@@ -108,6 +106,43 @@ const App: React.FC = () => {
         setWeeklyMenu(newWeeklyMenu);
     };
 
+    const handleRepeatWeeks = useCallback(() => {
+        setWeeklyMenu(prev => {
+            const newWeeklyMenu = { ...prev };
+            const startOfWeek1 = new Date(currentDate);
+            startOfWeek1.setDate(currentDate.getDate() - currentDate.getDay() + (currentDate.getDay() === 0 ? -6 : 1));
+            const startOfWeek2 = new Date(startOfWeek1);
+            startOfWeek2.setDate(startOfWeek1.getDate() + 7);
+
+            for (let i = 0; i < 5; i++) {
+                const date1 = new Date(startOfWeek1);
+                date1.setDate(startOfWeek1.getDate() + i);
+                const date1Key = date1.toISOString().split('T')[0];
+
+                const date3 = new Date(date1);
+                date3.setDate(date1.getDate() + 14);
+                const date3Key = date3.toISOString().split('T')[0];
+
+                if (newWeeklyMenu[date1Key]) {
+                    newWeeklyMenu[date3Key] = newWeeklyMenu[date1Key];
+                }
+
+                const date2 = new Date(startOfWeek2);
+                date2.setDate(startOfWeek2.getDate() + i);
+                const date2Key = date2.toISOString().split('T')[0];
+
+                const date4 = new Date(date2);
+                date4.setDate(date2.getDate() + 14);
+                const date4Key = date4.toISOString().split('T')[0];
+
+                if (newWeeklyMenu[date2Key]) {
+                    newWeeklyMenu[date4Key] = newWeeklyMenu[date2Key];
+                }
+            }
+            return newWeeklyMenu;
+        });
+    }, [currentDate]);
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800">
             <header className="bg-white shadow-sm">
@@ -132,7 +167,13 @@ const App: React.FC = () => {
                             onDateChange={handleDateChange}
                             onSelectMeal={handleSelectMeal}
                         />
-                        <WeeklyMenuDisplay weeklyMenu={weeklyMenu} currentDate={currentDate} />
+                        <WeeklyMenuDisplay 
+                            weeklyMenu={weeklyMenu} 
+                            currentDate={currentDate} 
+                            onAddMenu={handleAddMenu} 
+                            onCopyWeekMenu={handleCopyWeekMenu}
+                            onRepeatWeeks={handleRepeatWeeks}
+                        />
                     </div>
                     <div className="space-y-8">
                         <Settings 
@@ -141,7 +182,6 @@ const App: React.FC = () => {
                           studentName={studentName}
                           onStudentNameChange={handleStudentNameChange}
                         />
-                        <MenuUploader onAddMenu={handleAddMenu} onCopyWeekMenu={handleCopyWeekMenu} />
                         <Dashboard selections={selections} prices={prices} currentDate={currentDate} />
                     </div>
                 </div>
